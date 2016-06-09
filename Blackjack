@@ -1,0 +1,180 @@
+'''
+Blackjack Card Game
+Created by Ben Calvert
+June 8, 2016
+'''
+
+import random
+
+# Global Variables
+
+gameover = False
+handover = False
+
+class Player(object):
+
+    def __init__(self,name,bankroll=1000,wins=0,losses=0,bet=5):
+        # type: (object, object, object, object, object) -> object
+        self.name = name
+        self.bankroll = bankroll
+        self.wins = wins
+        self.losses = losses
+        self.bet = bet
+        self.hand = []
+        self.card_sum = 0
+        self.bust = False
+
+    def add_bankroll(self,amount):
+        self.bankroll += amount
+
+    def sub_bankroll(self,amount):
+        self.bankroll -= amount
+
+    def org_cards(self,tp):
+        self.hand.append(tp)
+
+    def collect_card(self,player,card):
+        suit,rank = card
+        if rank >= 11:
+            self.card_sum +=10
+        elif rank == 1 and self.card_sum <= 10:
+            self.card_sum += 11
+        else:
+            self.card_sum += rank
+
+class Deck(object):
+
+    suits_name = ['Hearts','Spades','Diamonds','Clubs']
+    rank_name = ['None','Ace','2','3','4','5','6','7','8','9','10','Jack','Queen','King']
+
+    def __init__(self):
+        self.deck = []
+        for suit in range (0,4):
+            for rank in range (1,14):
+                card = (suit,rank)
+                self.deck.append(card)
+
+    def shuffle(self):
+        random.shuffle(self.deck)
+
+    def deal_card(self):
+        return self.deck.pop(0)
+
+    def get_card(self,tp):
+        suit,rank = tp
+        return '%s of %s' %(Deck.rank_name[rank],Deck.suits_name[suit])
+
+#Functions
+
+def deal_cards():
+    d.shuffle()
+    for i in range (0,2):
+        card_player = d.deal_card()
+        p.org_cards(card_player)
+        player = p.name
+        p.collect_card(player,card_player)
+
+        card_dealer = d.deal_card()
+        dealer.org_cards(card_dealer)
+        player = dealer.name
+        dealer.collect_card(player,card_dealer)
+
+
+def player_turn():
+    global handover
+    while handover is False:
+        print('\n')
+        print('{}\'s Hand').format(p.name)
+        p_hand = p.hand
+        for i in range (len(p_hand)):
+            print(d.get_card(p_hand[i]))
+        p_points = p.card_sum
+        if p_points >= 22:
+            print('Busted! with {}').format(p.card_sum)
+            p.bust = True
+            break
+        else:
+            print('{}\'s Points: {}').format(p.name,p_points)
+            answer = raw_input('Do you want a hit?')
+            if answer == 'y':
+                card = d.deal_card()
+                p.org_cards(card)
+                p.collect_card(p.name,card)
+            else:
+                print(p.name + ' Stands with {}').format(p.card_sum)
+                break
+
+def dealer_turn():
+    global handover
+    while handover is False:
+        print('\n')
+        print('Dealer\'s Hand')
+        dealer_hand = dealer.hand
+        for i in range(len(dealer_hand)):
+            print(d.get_card(dealer_hand[i]))
+        d_points = dealer.card_sum
+        if d_points >= 22:
+            print('Busted with {}').format(dealer.card_sum)
+            dealer.bust = True
+            handover = True
+        else:
+            print('{}\'s Points: {}').format(dealer.name,d_points)
+            answer = raw_input('Do you want a hit?')
+            if answer == 'y':
+                card = d.deal_card()
+                dealer.org_cards(card)
+                dealer.collect_card(dealer.name,card)
+            else:
+                print('Dealer Stands with {}').format(dealer.card_sum)
+                break
+
+def check_winner():
+    if p.card_sum >= dealer.card_sum and p.bust is False:
+        print('{} is the Winner!').format(p.name)
+        p.bankroll += p.bet
+        dealer.bankroll -= p.bet
+    elif p.card_sum < dealer.card_sum and dealer.bust is False:
+        print('{} is the Winner!').format(dealer.name)
+        p.bankroll -= p.bet
+        dealer.bankroll += p.bet
+    elif p.card_sum > dealer.card_sum and p.bust is True:
+        print('{} is the Winner!').format(dealer.name)
+        p.bankroll -= p.bet
+        dealer.bankroll += p.bet
+    else:
+        print('No winning condition')
+
+def bank_bal():
+    print('{} \'s bankroll: {}').format(p.name,p.bankroll)
+    print('{} \'s bankroll: {}').format(dealer.name,dealer.bankroll)
+
+#code body
+
+p = Player('Ben',1000)
+dealer = Player('Dealer',10000)
+
+while gameover is False:
+    d = Deck()
+    deal_cards()
+    player_turn()
+    dealer_turn()
+    check_winner()
+    bank_bal()
+    if raw_input('Do you want to play again?') == 'n':
+        gameover = True
+    else:
+        pass
+
+# for c in range(len(hand)):
+#     suit,rank = hand[c]
+#     print(d.get_card((suit,rank)))
+#
+# print(points)
+# print('Deck')
+# print(len(d.deck))
+# deck = d.deck
+#
+# for pos in range(len(deck)):
+#     suit,rank = deck[pos]
+#     print(d.get_card((suit,rank)) + ' rank = {}').format(rank)
+
