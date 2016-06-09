@@ -9,7 +9,7 @@ import random
 # Global Variables
 
 gameover = False
-handover = False
+hand_over = False
 
 class Player(object):
 
@@ -81,8 +81,8 @@ def deal_cards():
 
 
 def player_turn():
-    global handover
-    while handover is False:
+    global hand_over
+    while hand_over is False:
         print('\n')
         print('{}\'s Hand').format(p.name)
         p_hand = p.hand
@@ -95,7 +95,7 @@ def player_turn():
             break
         else:
             print('{}\'s Points: {}').format(p.name,p_points)
-            answer = raw_input('Do you want a hit?')
+            answer = raw_input('Do you want a hit? (y/n)')
             if answer == 'y':
                 card = d.deal_card()
                 p.org_cards(card)
@@ -105,8 +105,8 @@ def player_turn():
                 break
 
 def dealer_turn():
-    global handover
-    while handover is False:
+    global hand_over
+    while hand_over is False:
         print('\n')
         print('Dealer\'s Hand')
         dealer_hand = dealer.hand
@@ -116,10 +116,10 @@ def dealer_turn():
         if d_points >= 22:
             print('Busted with {}').format(dealer.card_sum)
             dealer.bust = True
-            handover = True
+            hand_over = True
         else:
             print('{}\'s Points: {}').format(dealer.name,d_points)
-            answer = raw_input('Do you want a hit?')
+            answer = raw_input('Do you want a hit? (y/n)')
             if answer == 'y':
                 card = d.deal_card()
                 dealer.org_cards(card)
@@ -162,19 +162,6 @@ while gameover is False:
     bank_bal()
     if raw_input('Do you want to play again?') == 'n':
         gameover = True
+        #rest player counters then continue
     else:
         pass
-
-# for c in range(len(hand)):
-#     suit,rank = hand[c]
-#     print(d.get_card((suit,rank)))
-#
-# print(points)
-# print('Deck')
-# print(len(d.deck))
-# deck = d.deck
-#
-# for pos in range(len(deck)):
-#     suit,rank = deck[pos]
-#     print(d.get_card((suit,rank)) + ' rank = {}').format(rank)
-
