@@ -13,22 +13,16 @@ hand_over = False
 
 class Player(object):
 
-    def __init__(self,name,bankroll=1000,wins=0,losses=0,bet=5):
-        # type: (object, object, object, object, object) -> object
+    def __init__(self,name,bankroll=1000,bet=25):
+
         self.name = name
         self.bankroll = bankroll
-        self.wins = wins
-        self.losses = losses
+        self.wins = 0
+        self.losses = 0
         self.bet = bet
         self.hand = []
         self.card_sum = 0
         self.bust = False
-
-    def add_bankroll(self,amount):
-        self.bankroll += amount
-
-    def sub_bankroll(self,amount):
-        self.bankroll -= amount
 
     def org_cards(self,tp):
         self.hand.append(tp)
@@ -43,12 +37,15 @@ class Player(object):
             self.card_sum += rank
 
 class Deck(object):
-
+    #Create lookup tables for tuple card values
     suits_name = ['Hearts','Spades','Diamonds','Clubs']
     rank_name = ['None','Ace','2','3','4','5','6','7','8','9','10','Jack','Queen','King']
 
     def __init__(self):
+        self.discards = 0
         self.deck = []
+        #Create a Tuple for the deck containing suit/rank values
+        #Which will be looked up later
         for suit in range (0,4):
             for rank in range (1,14):
                 card = (suit,rank)
@@ -58,110 +55,250 @@ class Deck(object):
         random.shuffle(self.deck)
 
     def deal_card(self):
+        #Keep track of discards and pop tuple value - used after shuffling the self.deck Object
+        self.discards += 1
         return self.deck.pop(0)
 
     def get_card(self,tp):
+        #Look up card's Suit and Rank
         suit,rank = tp
         return '%s of %s' %(Deck.rank_name[rank],Deck.suits_name[suit])
 
-#Functions
+#Program Functions
+
+def get_player_name():
+    print('Welcome to the Blackjack Table!')
+    print('\n')
+    name = raw_input('Please enter your name: ')
+    return name
+
+def get_player_money():
+    while True:
+        try:
+            money = int(raw_input('Please enter chip amount: '))
+        except ValueError:
+            print('Invalid chip amount, {}.').format(name)
+            continue
+        else:
+            break
+    return money
+
+def get_player_bet():
+    while True:
+        try:
+            bet = int(raw_input('Please enter your bet: '))
+        except ValueError:
+            print('Invalid bet amount, {}.').format(name)
+            continue
+        else:
+            break
+    return bet
+
 
 def deal_cards():
+    '''
+    Shuffle and Deal 2 cards to each player.
+    :return:
+    '''
     d.shuffle()
     for i in range (0,2):
+        #Player gets dealt to first and third
         card_player = d.deal_card()
         p.org_cards(card_player)
         player = p.name
         p.collect_card(player,card_player)
-
+        #Dealer gets second and fourth cards
         card_dealer = d.deal_card()
         dealer.org_cards(card_dealer)
         player = dealer.name
         dealer.collect_card(player,card_dealer)
 
-
 def player_turn():
     global hand_over
+    #Do while player's turn
     while hand_over is False:
+
+        #Display Player's cards in their hand
         print('\n')
         print('{}\'s Hand').format(p.name)
         p_hand = p.hand
         for i in range (len(p_hand)):
             print(d.get_card(p_hand[i]))
         p_points = p.card_sum
+
+        #Check card point totals
         if p_points >= 22:
             print('Busted! with {}').format(p.card_sum)
             p.bust = True
             break
         else:
             print('{}\'s Points: {}').format(p.name,p_points)
-            answer = raw_input('Do you want a hit? (y/n)')
-            if answer == 'y':
+
+            #Check to see if player will Hit or Stand -- ONLY 'h' or 's' is accepted.
+            answer = raw_input('Do you want to Hit or Stand? (h/s)')
+            if answer == 'h':
+                #Make sure cards are available in deck
+                check_deck()
+
+                #Deal another card to player
                 card = d.deal_card()
                 p.org_cards(card)
                 p.collect_card(p.name,card)
-            else:
+            elif answer == 's':
                 print(p.name + ' Stands with {}').format(p.card_sum)
                 break
+            else:
+                print('Invalid Response.  Please try again!')
+
 
 def dealer_turn():
     global hand_over
+    #Do while dealer's turn
     while hand_over is False:
+
+        #Display Dealer's cards in their hand
         print('\n')
         print('Dealer\'s Hand')
         dealer_hand = dealer.hand
         for i in range(len(dealer_hand)):
             print(d.get_card(dealer_hand[i]))
         d_points = dealer.card_sum
+        print('{}\'s Points: {}').format(dealer.name,d_points)
+
+        #Check card point totals
         if d_points >= 22:
             print('Busted with {}').format(dealer.card_sum)
             dealer.bust = True
             hand_over = True
+
+        #Dealer MUST hit below 17
+        elif d_points < 17 and p.bust is False:
+            print('Dealer must hit.')
+
+            #Make sure cards are available in deck
+            check_deck()
+
+            #Deal another card to Dealer
+            card = d.deal_card()
+            dealer.org_cards(card)
+            dealer.collect_card(dealer.name,card)
         else:
-            print('{}\'s Points: {}').format(dealer.name,d_points)
-            answer = raw_input('Do you want a hit? (y/n)')
-            if answer == 'y':
-                card = d.deal_card()
-                dealer.org_cards(card)
-                dealer.collect_card(dealer.name,card)
-            else:
-                print('Dealer Stands with {}').format(dealer.card_sum)
-                break
+            print('Dealer Stands with {}').format(dealer.card_sum)
+            break
 
 def check_winner():
-    if p.card_sum >= dealer.card_sum and p.bust is False:
+    #Check Winning Conditions
+
+    #If player has a higher point total w/o going over 21 and is not busted.
+    if p.card_sum > dealer.card_sum and p.bust is False:
         print('{} is the Winner!').format(p.name)
         p.bankroll += p.bet
         dealer.bankroll -= p.bet
+        p.wins += 1
+        dealer.losses +=1
+
+    #If player has a lesser point total, and Dealer is not busted.
     elif p.card_sum < dealer.card_sum and dealer.bust is False:
         print('{} is the Winner!').format(dealer.name)
         p.bankroll -= p.bet
         dealer.bankroll += p.bet
+        dealer.wins += 1
+        p.losses += 1
+
+    #If player has a higher point total, but is busted.
     elif p.card_sum > dealer.card_sum and p.bust is True:
         print('{} is the Winner!').format(dealer.name)
         p.bankroll -= p.bet
         dealer.bankroll += p.bet
+        dealer.wins += 1
+        p.losses += 1
+    #If player has an equal point total to dealer, it's a Push!
+    elif p.card_sum == dealer.card_sum and p.bust is False:
+        print('{} is the Winner with a Push!').format(p.name)
+        p.bankroll += p.bet
+        dealer.bankroll -= p.bet
+        p.wins += 1
+        dealer.losses +=1
+
+    #If player has a lower point count than dealer, but the dealer is busted.
+    elif p.card_sum < dealer.card_sum and dealer.bust is True:
+        print('{} is the Winner!').format(p.name)
+        p.bankroll += p.bet
+        dealer.bankroll -= p.bet
+        p.wins += 1
+        dealer.losses += 1
+
+    #For any missed combination
     else:
-        print('No winning condition')
+        print('No Apparent Winner...program issue.')
 
 def bank_bal():
-    print('{} \'s bankroll: {}').format(p.name,p.bankroll)
+
+    #Display each player's bankroll
+    print('\n'+'{} \'s bankroll: {}').format(p.name,p.bankroll)
     print('{} \'s bankroll: {}').format(dealer.name,dealer.bankroll)
 
-#code body
+def wins_v_losses():
 
-p = Player('Ben',1000)
+    #Display each player's win/loss record
+    print('\n'+'{} \'s wins: {} and losses: {}').format(p.name,p.wins,p.losses)
+    print('{} \'s wins: {} and losses: {}'+'\n').format(dealer.name,dealer.wins,dealer.losses)
+
+
+def check_deck():
+    '''
+    Check the card deck for available cards by looking at the len() of the d.deck Object
+    If less than 4 cards, end the game.  Fi there are still cards available, display how
+    many are left and how many are in the discard pile.
+    :return:
+    '''
+    cards_left = len(d.deck)
+    if cards_left < 4:
+        print('Game Over...Deck is exhausted.')
+        exit(0)
+    else:
+        print('\n'+'Still {} cards in play.').format(cards_left)
+        discards = d.discards
+        print('There have been {} played cards.').format(discards)
+
+#Code Body
+
+#Get player information via 3 separate functions
+name = get_player_name()
+money = get_player_money()
+bet = get_player_bet()
+
+#Setup Player and Dealer objects
+p = Player(name,money,bet)
 dealer = Player('Dealer',10000)
 
-while gameover is False:
-    d = Deck()
-    deal_cards()
-    player_turn()
-    dealer_turn()
-    check_winner()
-    bank_bal()
+#Setup the deck
+d = Deck()
+
+#The Game Mechanics
+while True:
+    deal_cards()    #Deal player hands
+    player_turn()   #The player goes first
+    dealer_turn()   #Dealer's turn to go
+    check_winner()  #Determine the winning condition
+    bank_bal()      #Print the bank balances
+    wins_v_losses() #Print Vins vs. Losses
+
+    #See if Player wants to continue - any response other than 'n' will be considered a 'yes' condition
+
     if raw_input('Do you want to play again?') == 'n':
-        gameover = True
-        #rest player counters then continue
+        print('Good Day to you, then.  Come back another time!')
+        break
     else:
-        pass
+        #Return cards and reset key counters
+        p.hand = []
+        dealer.hand = []
+        p.card_sum = 0
+        dealer.card_sum = 0
+        p.bust = False
+        dealer.bust = False
+        hand_over = False
+        if check_deck() == True:
+            break
+        else:
+            continue
