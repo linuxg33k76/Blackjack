@@ -235,8 +235,8 @@ def check_winner():
 def bank_bal():
 
     #Display each player's bankroll
-    print('\n'+'{} \'s bankroll: {}').format(p.name,p.bankroll)
-    print('{} \'s bankroll: {}').format(dealer.name,dealer.bankroll)
+    print('\n'+'{} \'s bankroll: ${}').format(p.name,p.bankroll)
+    print('{} \'s bankroll: ${}').format(dealer.name,dealer.bankroll)
 
 def wins_v_losses():
 
